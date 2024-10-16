@@ -83,7 +83,7 @@ class GameMapPanel extends JPanel {
     }
 
     private void placeElement(MouseEvent e) {
-        int cellSize = 50; // Taille de chaque carré
+        int cellSize = 10; // Taille de chaque carré
         int col = e.getX() / cellSize;
         int row = e.getY() / cellSize;
         gameMap.placeElement(row, col, gameMap.getCurrentPlacementType());
@@ -94,7 +94,7 @@ class GameMapPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Block[][] board = gameMap.getBoard();
-        int cellSize = 50; // Taille de chaque carré
+        int cellSize = 10; // Taille de chaque carré
         Font font = new Font("Arial", Font.PLAIN, 10);
 
         for (int row = 0; row < board.length; row++) {

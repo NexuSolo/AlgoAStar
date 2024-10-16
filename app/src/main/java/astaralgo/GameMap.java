@@ -102,6 +102,8 @@ public class GameMap {
         while (!openList.isEmpty()) {
             Node currentNode = openList.poll();
             closedList.add(currentNode);
+            System.out.println("Nombre de nœuds explorés: " + closedList.size());
+            System.out.println("Exploration du nœud [" + currentNode.getRow() + ", " + currentNode.getCol() + "]");
 
             if (currentNode.getRow() == destinationPosition[0] && currentNode.getCol() == destinationPosition[1]) {
                 reconstructPath(currentNode);
@@ -202,12 +204,12 @@ public class GameMap {
     }
 
     public static void main(String[] args) {
-        GameMap gameMap = new GameMap(10, 10);
+        GameMap gameMap = new GameMap(75, 140);
 
         SwingUtilities.invokeLater(() -> {
             GameMapFrame frame = new GameMapFrame(gameMap);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(800, 800);
+            frame.setSize(1500, 1000);
             frame.setVisible(true);
         });
     }
