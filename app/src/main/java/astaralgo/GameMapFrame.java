@@ -3,9 +3,8 @@ package astaralgo;
 import javax.swing.JFrame;
 
 class GameMapFrame extends JFrame {
-    public GameMapFrame(GameMap gameMap) {
+    public GameMapFrame(GameMapPanel panel) {
         setTitle("Game Map");
-        GameMapPanel panel = new GameMapPanel(gameMap);
         add(panel);
     }
 }

@@ -18,8 +18,11 @@ public class GameMap {
     private List<Node> path = new ArrayList<>(); // Chemin trouvé par l'algorithme A*
     private int currentStep = 0; // Étape actuelle du chemin
     private Set<Node> openNodes = new HashSet<>();
+    private Set<Node> closedNodes = new HashSet<>();
+    private GameMapPanel gameMapPanel; // Référence au panneau de la carte
 
-    public GameMap(int rows, int cols) {
+    public GameMap(int rows, int cols, GameMapPanel gameMapPanel) {
+        this.gameMapPanel = gameMapPanel;
         board = new Block[rows][cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -105,14 +108,16 @@ public class GameMap {
             Node currentNode = openList.poll();
             closedList.add(currentNode);
             openNodes.remove(currentNode);
+            closedNodes.add(currentNode);
 
-            System.out.println("Nombre de nœuds explorés: " + closedList.size());
-            System.out.println("Exploration du nœud [" + currentNode.getRow() + ", " + currentNode.getCol() + "]");
 
             if (currentNode.getRow() == destinationPosition[0] && currentNode.getCol() == destinationPosition[1]) {
                 reconstructPath(currentNode);
                 long endTime = System.nanoTime(); // Fin de la mesure du temps
                 System.out.println("Chemin trouvé en " + (endTime - startTime) + " ns");
+                SwingUtilities.invokeLater(() -> {
+                    setAlgorithmRunning(false);
+                });
                 return;
             }
 
@@ -135,10 +140,25 @@ public class GameMap {
                     }
                 }
             }
+
+            //attend 10ms pour chaque étape de l'algorithme
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+    
+            // Mettre à jour l'affichage
+            SwingUtilities.invokeLater(() -> {
+                gameMapPanel.repaint();
+            });
         }
     
         long endTime = System.nanoTime(); // Fin de la mesure du temps
         System.out.println("Aucun chemin trouvé. Temps écoulé: " + (endTime - startTime) + " ns");
+        SwingUtilities.invokeLater(() -> {
+            setAlgorithmRunning(false);
+        });
     }
 
     private int calculateHeuristic(int row, int col) {
@@ -215,11 +235,16 @@ public class GameMap {
         return openNodes;
     }
     
-    public static void main(String[] args) {
-        GameMap gameMap = new GameMap(75, 140);
+    public Set<Node> getClosedNodes() {
+        return closedNodes;
+    }
 
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            GameMapFrame frame = new GameMapFrame(gameMap);
+            GameMapPanel gameMapPanel = new GameMapPanel();
+            GameMap gameMap = new GameMap(75, 140, gameMapPanel);
+            gameMapPanel.setGameMap(gameMap);
+            GameMapFrame frame = new GameMapFrame(gameMapPanel);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1500, 1000);
             frame.setVisible(true);

@@ -20,8 +20,7 @@ class GameMapPanel extends JPanel {
     
     private static final int CELL_SIZE = 10;
     
-    public GameMapPanel(GameMap gameMap) {
-        this.gameMap = gameMap;
+    public GameMapPanel() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -66,7 +65,7 @@ class GameMapPanel extends JPanel {
                     } else if (gameMap.getCurrentPlacementType() == BlockType.FULL) {
                         if (!gameMap.isAlgorithmRunning()) {
                             gameMap.setAlgorithmRunning(true);
-                            gameMap.findPath();
+                            new Thread(() -> gameMap.findPath()).start(); // Exécuter l'algorithme dans un thread séparé
                         } else {
                             if (gameMap.hasPlayerReachedDestination()) {
                                 JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(GameMapPanel.this);
@@ -82,6 +81,10 @@ class GameMapPanel extends JPanel {
         });
         setFocusable(true);
         requestFocusInWindow();
+    }
+
+    public void setGameMap(GameMap gameMap) {
+        this.gameMap = gameMap;
     }
 
     private void placeElement(MouseEvent e) {
@@ -104,8 +107,12 @@ class GameMapPanel extends JPanel {
                     g.setColor(Color.RED);
                 } else if (block.getType() == BlockType.DESTINATION) {
                     g.setColor(Color.GREEN);
-                } else if (gameMap.isAlgorithmRunning() && gameMap.isNodeInPath(row, col)) {
+                } else if (gameMap.isNodeInPath(row, col)) {
                     g.setColor(Color.YELLOW);
+                } else if (gameMap.getOpenNodes().contains(new Node(row, col, 0, 0, null))) {
+                    g.setColor(Color.CYAN); // Couleur pour les nœuds en cours de traitement
+                } else if (gameMap.getClosedNodes().contains(new Node(row, col, 0, 0, null))) {
+                    g.setColor(Color.GRAY); // Couleur pour les nœuds déjà traités
                 } else {
                     g.setColor(block.getType().getColor());
                 }
