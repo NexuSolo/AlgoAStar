@@ -90,6 +90,8 @@ public class GameMap {
             return;
         }
 
+        long startTime = System.nanoTime(); // Début de la mesure du temps
+
         PriorityQueue<Node> openList = new PriorityQueue<>();
         Set<Node> closedList = new HashSet<>();
 
@@ -103,11 +105,13 @@ public class GameMap {
 
             if (currentNode.getRow() == destinationPosition[0] && currentNode.getCol() == destinationPosition[1]) {
                 reconstructPath(currentNode);
+                long endTime = System.nanoTime(); // Fin de la mesure du temps
+                System.out.println("Chemin trouvé en " + (endTime - startTime) + " ns");
                 return;
             }
 
             for (Node neighbor : getNeighbors(currentNode)) {
-                if (closedList.contains(neighbor) || board[neighbor.getRow()][neighbor.getCol()].getType() == BlockType.FULL) {
+                if (closedList.contains(neighbor)) {
                     continue;
                 }
 
@@ -126,7 +130,8 @@ public class GameMap {
             }
         }
 
-        System.out.println("Aucun chemin trouvé.");
+        long endTime = System.nanoTime(); // Fin de la mesure du temps
+        System.out.println("Aucun chemin trouvé. Temps écoulé: " + (endTime - startTime) + " ns");
     }
 
     private int calculateHeuristic(int row, int col) {
@@ -142,6 +147,9 @@ public class GameMap {
             int newCol = node.getCol() + direction[1];
 
             if (newRow >= 0 && newRow < board.length && newCol >= 0 && newCol < board[0].length) {
+                if (board[newRow][newCol].getType() == BlockType.FULL) {
+                    continue;
+                }
                 int g = node.getG() + 1;
                 int h = calculateHeuristic(newRow, newCol);
                 neighbors.add(new Node(newRow, newCol, g, h, node));
