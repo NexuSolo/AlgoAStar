@@ -17,6 +17,7 @@ public class GameMap {
     private boolean isAlgorithmRunning = false; // Drapeau pour indiquer si l'algorithme est en cours
     private List<Node> path = new ArrayList<>(); // Chemin trouvé par l'algorithme A*
     private int currentStep = 0; // Étape actuelle du chemin
+    private Set<Node> openNodes = new HashSet<>();
 
     public GameMap(int rows, int cols) {
         board = new Block[rows][cols];
@@ -89,19 +90,22 @@ public class GameMap {
             System.out.println("Le joueur ou la destination n'est pas placé.");
             return;
         }
-
+    
         long startTime = System.nanoTime(); // Début de la mesure du temps
-
+    
         PriorityQueue<Node> openList = new PriorityQueue<>();
         Set<Node> closedList = new HashSet<>();
-
+    
         Node startNode = new Node(playerPosition[0], playerPosition[1], 0, calculateHeuristic(playerPosition[0], playerPosition[1]), null);
         openList.add(startNode);
         startNode.setInOpenList(true);
-
+        openNodes.add(startNode);
+    
         while (!openList.isEmpty()) {
             Node currentNode = openList.poll();
             closedList.add(currentNode);
+            openNodes.remove(currentNode);
+
             System.out.println("Nombre de nœuds explorés: " + closedList.size());
             System.out.println("Exploration du nœud [" + currentNode.getRow() + ", " + currentNode.getCol() + "]");
 
@@ -112,7 +116,7 @@ public class GameMap {
                 return;
             }
 
-            for (Node neighbor : getNeighbors(currentNode)) {
+            for (Node neighbor : getNeighbors(currentNode, closedList, openNodes)) {
                 if (closedList.contains(neighbor)) {
                     continue;
                 }
@@ -120,6 +124,7 @@ public class GameMap {
                 if (!neighbor.isInOpenList()) {
                     openList.add(neighbor);
                     neighbor.setInOpenList(true);
+                    openNodes.add(neighbor);
                 } else {
                     for (Node openNode : openList) {
                         if (openNode.equals(neighbor) && neighbor.getG() < openNode.getG()) {
@@ -131,7 +136,7 @@ public class GameMap {
                 }
             }
         }
-
+    
         long endTime = System.nanoTime(); // Fin de la mesure du temps
         System.out.println("Aucun chemin trouvé. Temps écoulé: " + (endTime - startTime) + " ns");
     }
@@ -140,7 +145,7 @@ public class GameMap {
         return Math.abs(row - destinationPosition[0]) + Math.abs(col - destinationPosition[1]);
     }
 
-    private Set<Node> getNeighbors(Node node) {
+    private Set<Node> getNeighbors(Node node, Set<Node> closedNodes, Set<Node> openNodes) {
         Set<Node> neighbors = new HashSet<>();
         int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
@@ -152,9 +157,12 @@ public class GameMap {
                 if (board[newRow][newCol].getType() == BlockType.FULL) {
                     continue;
                 }
-                int g = node.getG() + 1;
-                int h = calculateHeuristic(newRow, newCol);
-                neighbors.add(new Node(newRow, newCol, g, h, node));
+
+                Node neighbor = new Node(newRow, newCol, node.getG() + 1, calculateHeuristic(newRow, newCol), node);
+                if (!closedNodes.contains(neighbor) && !openNodes.contains(neighbor)) {
+                    neighbors.add(neighbor);
+                }
+
             }
         }
 
@@ -203,6 +211,10 @@ public class GameMap {
         return path.stream().filter(node -> node.getRow() == row && node.getCol() == col).findFirst().orElse(null);
     }
 
+    public Set<Node> getOpenNodes() {
+        return openNodes;
+    }
+    
     public static void main(String[] args) {
         GameMap gameMap = new GameMap(75, 140);
 
