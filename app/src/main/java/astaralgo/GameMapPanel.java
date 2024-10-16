@@ -39,9 +39,13 @@ class GameMapPanel extends JPanel {
                     } else if (gameMap.getCurrentPlacementType() == BlockType.DESTINATION) {
                         gameMap.setCurrentPlacementType(BlockType.FULL);
                     } else if (gameMap.getCurrentPlacementType() == BlockType.FULL) {
-                        // Passer à l'étape suivante (par exemple, lancer l'algorithme A*)
-                        gameMap.setAlgorithmRunning(true);
-                        System.out.println("Lancer l'algorithme A*");
+                        if (!gameMap.isAlgorithmRunning()) {
+                            gameMap.setAlgorithmRunning(true);
+                            gameMap.findPath();
+                        } else {
+                            gameMap.advanceStep();
+                        }
+                        repaint();
                     }
                 }
             }
@@ -59,7 +63,16 @@ class GameMapPanel extends JPanel {
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 Block block = board[row][col];
-                g.setColor(block.getType().getColor());
+                if (gameMap.isAlgorithmRunning() && gameMap.getCurrentStep() < gameMap.getPath().size()) {
+                    Node node = gameMap.getPath().get(gameMap.getCurrentStep());
+                    if (node.getRow() == row && node.getCol() == col) {
+                        g.setColor(Color.YELLOW);
+                    } else {
+                        g.setColor(block.getType().getColor());
+                    }
+                } else {
+                    g.setColor(block.getType().getColor());
+                }
                 g.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
                 g.setColor(Color.BLACK);
                 g.drawRect(col * cellSize, row * cellSize, cellSize, cellSize);

@@ -3,6 +3,11 @@ package astaralgo;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import astaralgo.enums.BlockType;
+import java.util.PriorityQueue;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 public class GameMap {
     private Block[][] board;
@@ -10,6 +15,8 @@ public class GameMap {
     private int[] playerPosition = null;
     private int[] destinationPosition = null;
     private boolean isAlgorithmRunning = false; // Drapeau pour indiquer si l'algorithme est en cours
+    private List<Node> path = new ArrayList<>(); // Chemin trouvé par l'algorithme A*
+    private int currentStep = 0; // Étape actuelle du chemin
 
     public GameMap(int rows, int cols) {
         board = new Block[rows][cols];
@@ -83,6 +90,88 @@ public class GameMap {
                 System.out.print(block.getValue() + " ");
             }
             System.out.println();
+        }
+    }
+
+    public void findPath() {
+        if (playerPosition == null || destinationPosition == null) {
+            System.out.println("Le joueur ou la destination n'est pas placé.");
+            return;
+        }
+
+        PriorityQueue<Node> openList = new PriorityQueue<>();
+        Set<Node> closedList = new HashSet<>();
+
+        Node startNode = new Node(playerPosition[0], playerPosition[1], 0, calculateHeuristic(playerPosition[0], playerPosition[1]), null);
+        openList.add(startNode);
+
+        while (!openList.isEmpty()) {
+            Node currentNode = openList.poll();
+            closedList.add(currentNode);
+
+            if (currentNode.getRow() == destinationPosition[0] && currentNode.getCol() == destinationPosition[1]) {
+                reconstructPath(currentNode);
+                return;
+            }
+
+            for (Node neighbor : getNeighbors(currentNode)) {
+                if (closedList.contains(neighbor) || board[neighbor.getRow()][neighbor.getCol()].getType() == BlockType.FULL) {
+                    continue;
+                }
+
+                if (!openList.contains(neighbor)) {
+                    openList.add(neighbor);
+                }
+            }
+        }
+
+        System.out.println("Aucun chemin trouvé.");
+    }
+
+    private int calculateHeuristic(int row, int col) {
+        return Math.abs(row - destinationPosition[0]) + Math.abs(col - destinationPosition[1]);
+    }
+
+    private Set<Node> getNeighbors(Node node) {
+        Set<Node> neighbors = new HashSet<>();
+        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+        for (int[] direction : directions) {
+            int newRow = node.getRow() + direction[0];
+            int newCol = node.getCol() + direction[1];
+
+            if (newRow >= 0 && newRow < board.length && newCol >= 0 && newCol < board[0].length) {
+                int g = node.getG() + 1;
+                int h = calculateHeuristic(newRow, newCol);
+                neighbors.add(new Node(newRow, newCol, g, h, node));
+            }
+        }
+
+        return neighbors;
+    }
+
+    private void reconstructPath(Node node) {
+        path.clear();
+        while (node != null) {
+            path.add(0, node); // Ajouter le nœud au début de la liste
+            node = node.getParent();
+        }
+        currentStep = 0;
+    }
+
+    public List<Node> getPath() {
+        return path;
+    }
+
+    public int getCurrentStep() {
+        return currentStep;
+    }
+
+    public void advanceStep() {
+        if (currentStep < path.size()) {
+            Node node = path.get(currentStep);
+            board[node.getRow()][node.getCol()] = new Block(BlockType.PLAYER);
+            currentStep++;
         }
     }
 
