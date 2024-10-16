@@ -84,15 +84,6 @@ public class GameMap {
         isAlgorithmRunning = algorithmRunning;
     }
 
-    public void displayBoard() {
-        for (Block[] row : board) {
-            for (Block block : row) {
-                System.out.print(block.getValue() + " ");
-            }
-            System.out.println();
-        }
-    }
-
     public void findPath() {
         if (playerPosition == null || destinationPosition == null) {
             System.out.println("Le joueur ou la destination n'est pas placé.");
@@ -104,6 +95,7 @@ public class GameMap {
 
         Node startNode = new Node(playerPosition[0], playerPosition[1], 0, calculateHeuristic(playerPosition[0], playerPosition[1]), null);
         openList.add(startNode);
+        startNode.setInOpenList(true);
 
         while (!openList.isEmpty()) {
             Node currentNode = openList.poll();
@@ -119,8 +111,17 @@ public class GameMap {
                     continue;
                 }
 
-                if (!openList.contains(neighbor)) {
+                if (!neighbor.isInOpenList()) {
                     openList.add(neighbor);
+                    neighbor.setInOpenList(true);
+                } else {
+                    for (Node openNode : openList) {
+                        if (openNode.equals(neighbor) && neighbor.getG() < openNode.getG()) {
+                            openList.remove(openNode);
+                            openList.add(neighbor);
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -153,6 +154,7 @@ public class GameMap {
     private void reconstructPath(Node node) {
         path.clear();
         while (node != null) {
+            node.setPath(true); // Marquer le nœud comme faisant partie du chemin
             path.add(0, node); // Ajouter le nœud au début de la liste
             node = node.getParent();
         }
@@ -167,21 +169,37 @@ public class GameMap {
         return currentStep;
     }
 
-    public void advanceStep() {
+    public void advancePlayer() {
         if (currentStep < path.size()) {
             Node node = path.get(currentStep);
+            if (currentStep > 0) {
+                Node prevNode = path.get(currentStep - 1);
+                board[prevNode.getRow()][prevNode.getCol()] = new Block(BlockType.EMPTY);
+            }
             board[node.getRow()][node.getCol()] = new Block(BlockType.PLAYER);
             currentStep++;
         }
     }
 
+    public boolean isNodeInPath(int row, int col) {
+        return path.stream().anyMatch(node -> node.getRow() == row && node.getCol() == col);
+    }
+
+    public boolean hasPlayerReachedDestination() {
+        return currentStep > 0 && currentStep == path.size();
+    }
+
+    public Node getNodeAt(int row, int col) {
+        return path.stream().filter(node -> node.getRow() == row && node.getCol() == col).findFirst().orElse(null);
+    }
+
     public static void main(String[] args) {
-        GameMap gameMap = new GameMap(5, 5);
+        GameMap gameMap = new GameMap(10, 10);
 
         SwingUtilities.invokeLater(() -> {
             GameMapFrame frame = new GameMapFrame(gameMap);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(400, 400);
+            frame.setSize(800, 800);
             frame.setVisible(true);
         });
     }
