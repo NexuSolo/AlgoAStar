@@ -35,17 +35,27 @@ public class GameMap {
         if (row >= 0 && row < board.length && col >= 0 && col < board[0].length) {
             if (type == BlockType.PLAYER) {
                 if (playerPosition != null) {
+                    // Ne pas placer de joueur sur la destination
+                    if (destinationPosition != null && destinationPosition[0] == row && destinationPosition[1] == col) {
+                        System.out.println("Impossible de placer le joueur sur la destination.");
+                        return;
+                    }
                     // Réinitialiser l'ancienne position du joueur à EMPTY
                     board[playerPosition[0]][playerPosition[1]] = new Block(BlockType.EMPTY);
                 }
                 playerPosition = new int[]{row, col};
             } else if (type == BlockType.DESTINATION) {
                 if (destinationPosition != null) {
+                    // Ne pas placer la destination sur le joueur
+                    if (playerPosition != null && playerPosition[0] == row && playerPosition[1] == col) {
+                        System.out.println("Impossible de placer la destination sur le joueur.");
+                        return;
+                    }
                     // Réinitialiser l'ancienne position de la destination à EMPTY
                     board[destinationPosition[0]][destinationPosition[1]] = new Block(BlockType.EMPTY);
                 }
                 destinationPosition = new int[]{row, col};
-            } else if (type == BlockType.FULL) {
+            } else if (type == BlockType.FULL || type == BlockType.EMPTY) {
                 // Ne pas placer de mur sur le joueur ou la destination
                 if ((playerPosition != null && playerPosition[0] == row && playerPosition[1] == col) ||
                     (destinationPosition != null && destinationPosition[0] == row && destinationPosition[1] == col)) {

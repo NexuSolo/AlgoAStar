@@ -17,6 +17,7 @@ import java.awt.event.KeyEvent;
 class GameMapPanel extends JPanel {
     private GameMap gameMap;
     private boolean isMousePressed = false;
+    private boolean isEraseMode = false; // Mode d'effacement
     
     private static final int CELL_SIZE = 10;
     
@@ -28,7 +29,7 @@ class GameMapPanel extends JPanel {
                     return; // Ignorer les clics si l'algorithme est en cours
                 }
                 isMousePressed = true;
-                placeElement(e);
+                placeOrEraseElement(e);
             }
             
             @Override
@@ -41,7 +42,7 @@ class GameMapPanel extends JPanel {
                 if (gameMap.isAlgorithmRunning()) {
                     return; // Ignorer les clics si l'algorithme est en cours
                 }
-                placeElement(e);
+                placeOrEraseElement(e);
             }
         });
 
@@ -49,7 +50,7 @@ class GameMapPanel extends JPanel {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (isMousePressed) {
-                    placeElement(e);
+                    placeOrEraseElement(e);
                 }
             }
         });
@@ -76,6 +77,8 @@ class GameMapPanel extends JPanel {
                         }
                         repaint();
                     }
+                } else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && gameMap.getCurrentPlacementType() == BlockType.FULL) {
+                    isEraseMode = !isEraseMode; // Basculer le mode d'effacement
                 }
             }
         });
@@ -87,10 +90,14 @@ class GameMapPanel extends JPanel {
         this.gameMap = gameMap;
     }
 
-    private void placeElement(MouseEvent e) {
+    private void placeOrEraseElement(MouseEvent e) {
         int col = e.getX() / CELL_SIZE;
         int row = e.getY() / CELL_SIZE;
-        gameMap.placeElement(row, col, gameMap.getCurrentPlacementType());
+        if (isEraseMode) {
+            gameMap.placeElement(row, col, BlockType.EMPTY); // Effacer l'élément
+        } else {
+            gameMap.placeElement(row, col, gameMap.getCurrentPlacementType()); // Placer l'élément
+        }
         repaint();
     }
     
@@ -107,7 +114,7 @@ class GameMapPanel extends JPanel {
                     g.setColor(Color.RED);
                 } else if (block.getType() == BlockType.DESTINATION) {
                     g.setColor(Color.GREEN);
-                } else if (gameMap.isNodeInPath(row, col)) {
+                } else if (gameMap.isAlgorithmRunning() && gameMap.isNodeInPath(row, col)) {
                     g.setColor(Color.YELLOW);
                 } else if (gameMap.getOpenNodes().contains(new Node(row, col, 0, 0, null))) {
                     g.setColor(Color.CYAN); // Couleur pour les nœuds en cours de traitement
